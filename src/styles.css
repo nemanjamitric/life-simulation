@@ -1,0 +1,132 @@
+:root {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #13283d;
+  background:
+    radial-gradient(circle at top left, #eef6ff 0%, transparent 28%),
+    linear-gradient(180deg, #f4f9ff 0%, #ffffff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.app-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+}
+
+.canvas-panel,
+.settings-card,
+.formula-card,
+.actions {
+  background: #fff;
+  border: 1px solid #cad8e8;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(43, 78, 112, 0.08);
+}
+
+.canvas-panel h2,
+.settings-card h3,
+.formula-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+canvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid rgba(118, 93, 70, 0.25);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.controls {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(250px, 1fr));
+  align-items: start;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px 10px;
+  border: 1px solid #b8c8da;
+  border-radius: 7px;
+  background: #fbfdff;
+  color: inherit;
+  font: inherit;
+}
+
+select[multiple] {
+  min-height: 96px;
+}
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: #1f6fb2;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+button + button {
+  margin-top: 8px;
+}
+
+button:hover {
+  background: #12558c;
+}
+
+.formula-card p,
+.actions p {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1280px) {
+  .controls {
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .app-grid,
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  #app {
+    padding: 14px;
+  }
+}
