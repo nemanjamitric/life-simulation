@@ -9,6 +9,13 @@ interface ControlRefs {
   summary: HTMLElement;
 }
 
+interface NumberField {
+  name: string;
+  min: number;
+  max: number;
+  round?: boolean;
+}
+
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value));
 
 export class UIController {
@@ -38,67 +45,68 @@ export class UIController {
     const root = this.controls.root;
     const terrainSource = this.readSelect(root, 'terrainSource') as TerrainSource;
     const terrainPreset = this.readSelect(root, 'terrainPreset') as TerrainPreset;
+    const readNumberField = (field: NumberField): number => this.readNumber(root, field.name, field.min, field.max, field.round);
 
     return {
       world: {
-        width: this.readNumber(root, 'worldWidth', 500, 2400, true),
-        height: this.readNumber(root, 'worldHeight', 360, 1800, true),
+        width: readNumberField({ name: 'worldWidth', min: 500, max: 2400, round: true }),
+        height: readNumberField({ name: 'worldHeight', min: 360, max: 1800, round: true }),
       },
       viewport: {
-        width: this.readNumber(root, 'viewportWidth', 320, 1200, true),
-        height: this.readNumber(root, 'viewportHeight', 220, 900, true),
+        width: readNumberField({ name: 'viewportWidth', min: 320, max: 1200, round: true }),
+        height: readNumberField({ name: 'viewportHeight', min: 220, max: 900, round: true }),
       },
       terrain: {
         source: terrainSource,
         preset: terrainPreset,
-        cellSize: this.readNumber(root, 'cellSize', 8, 30, true),
-        drinkDistance: this.readNumber(root, 'drinkDistance', 6, 48, true),
+        cellSize: readNumberField({ name: 'cellSize', min: 8, max: 30, round: true }),
+        drinkDistance: readNumberField({ name: 'drinkDistance', min: 6, max: 48, round: true }),
         generator: {
-          seed: this.readNumber(root, 'noiseSeed', 1, 999999, true),
-          scale: this.readNumber(root, 'noiseScale', 1, 20),
-          octaves: this.readNumber(root, 'noiseOctaves', 1, 6, true),
-          persistence: this.readNumber(root, 'noisePersistence', 0.1, 0.95),
+          seed: readNumberField({ name: 'noiseSeed', min: 1, max: 999999, round: true }),
+          scale: readNumberField({ name: 'noiseScale', min: 1, max: 20 }),
+          octaves: readNumberField({ name: 'noiseOctaves', min: 1, max: 6, round: true }),
+          persistence: readNumberField({ name: 'noisePersistence', min: 0.1, max: 0.95 }),
         },
       },
       predator: {
-        initialCount: this.readNumber(root, 'predatorCount', 1, 120, true),
-        variation: this.readNumber(root, 'predatorVariation', 0, 0.5),
+        initialCount: readNumberField({ name: 'predatorCount', min: 1, max: 120, round: true }),
+        variation: readNumberField({ name: 'predatorVariation', min: 0, max: 0.5 }),
         baseTraits: {
-          speed: this.readNumber(root, 'predatorSpeed', 0.3, 6),
-          size: this.readNumber(root, 'predatorSize', 0.4, 5),
-          perception: this.readNumber(root, 'predatorPerception', 0.4, 7),
-          maxAge: this.readNumber(root, 'predatorMaxAge', 40, 2500, true),
-          hungerCapacity: this.readNumber(root, 'predatorHunger', 10, 300),
-          thirstCapacity: this.readNumber(root, 'predatorThirst', 10, 300),
-          reproductionRate: this.readNumber(root, 'predatorReproduction', 0.1, 5),
+          speed: readNumberField({ name: 'predatorSpeed', min: 0.3, max: 6 }),
+          size: readNumberField({ name: 'predatorSize', min: 0.4, max: 5 }),
+          perception: readNumberField({ name: 'predatorPerception', min: 0.4, max: 7 }),
+          maxAge: readNumberField({ name: 'predatorMaxAge', min: 40, max: 2500, round: true }),
+          hungerCapacity: readNumberField({ name: 'predatorHunger', min: 10, max: 300 }),
+          thirstCapacity: readNumberField({ name: 'predatorThirst', min: 10, max: 300 }),
+          reproductionRate: readNumberField({ name: 'predatorReproduction', min: 0.1, max: 5 }),
         },
       },
       prey: {
-        initialCount: this.readNumber(root, 'preyCount', 2, 240, true),
-        variation: this.readNumber(root, 'preyVariation', 0, 0.5),
+        initialCount: readNumberField({ name: 'preyCount', min: 2, max: 240, round: true }),
+        variation: readNumberField({ name: 'preyVariation', min: 0, max: 0.5 }),
         baseTraits: {
-          speed: this.readNumber(root, 'preySpeed', 0.3, 6),
-          size: this.readNumber(root, 'preySize', 0.4, 5),
-          perception: this.readNumber(root, 'preyPerception', 0.4, 7),
-          maxAge: this.readNumber(root, 'preyMaxAge', 40, 2500, true),
-          hungerCapacity: this.readNumber(root, 'preyHunger', 10, 300),
-          thirstCapacity: this.readNumber(root, 'preyThirst', 10, 300),
-          reproductionRate: this.readNumber(root, 'preyReproduction', 0.1, 5),
+          speed: readNumberField({ name: 'preySpeed', min: 0.3, max: 6 }),
+          size: readNumberField({ name: 'preySize', min: 0.4, max: 5 }),
+          perception: readNumberField({ name: 'preyPerception', min: 0.4, max: 7 }),
+          maxAge: readNumberField({ name: 'preyMaxAge', min: 40, max: 2500, round: true }),
+          hungerCapacity: readNumberField({ name: 'preyHunger', min: 10, max: 300 }),
+          thirstCapacity: readNumberField({ name: 'preyThirst', min: 10, max: 300 }),
+          reproductionRate: readNumberField({ name: 'preyReproduction', min: 0.1, max: 5 }),
         },
       },
       food: {
-        initialCount: this.readNumber(root, 'plantCount', 1, 400, true),
-        respawnPerTick: this.readNumber(root, 'plantRespawn', 0, 8),
-        energyGain: this.readNumber(root, 'plantNutrition', 5, 120),
+        initialCount: readNumberField({ name: 'plantCount', min: 1, max: 400, round: true }),
+        respawnPerTick: readNumberField({ name: 'plantRespawn', min: 0, max: 8 }),
+        energyGain: readNumberField({ name: 'plantNutrition', min: 5, max: 120 }),
         spawnTerrain: this.readTerrainList(root, 'plantTerrain'),
       },
       mutation: {
-        chance: this.readNumber(root, 'mutationChance', 0, 1),
-        amount: this.readNumber(root, 'mutationAmount', 0.01, 0.8),
+        chance: readNumberField({ name: 'mutationChance', min: 0, max: 1 }),
+        amount: readNumberField({ name: 'mutationAmount', min: 0.01, max: 0.8 }),
       },
       timing: {
-        tickSeconds: this.readNumber(root, 'tickSeconds', 0.01, 0.2),
-        simulationSpeed: this.readNumber(root, 'simulationSpeed', 0.25, 6),
+        tickSeconds: readNumberField({ name: 'tickSeconds', min: 0.01, max: 0.2 }),
+        simulationSpeed: readNumberField({ name: 'simulationSpeed', min: 0.25, max: 6 }),
       },
     };
   };

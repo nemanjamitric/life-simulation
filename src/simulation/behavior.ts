@@ -16,13 +16,7 @@ export const determineDominantNeed = (creature: Creature): CreatureNeed => {
 };
 
 export const chooseMate = (creature: Creature, population: Creature[]): Creature | null => {
-  const candidates = population.filter((other) => {
-    if (other.id === creature.id || !creature.canMateWith(other)) {
-      return false;
-    }
-
-    return creature.distanceTo(other.position) <= creature.getPerceptionRadius();
-  });
+  const candidates = population.filter((other) => isVisibleMateCandidate(creature, other));
 
   candidates.sort((left, right) => {
     if (right.traits.size !== left.traits.size) {
@@ -53,14 +47,7 @@ export const choosePreyTarget = (predator: Creature, preyPopulation: Creature[])
   let bestScore = Number.NEGATIVE_INFINITY;
 
   for (const prey of sensed) {
-    const distance = Math.max(1, predator.distanceTo(prey.position));
-    const closeness = 1 / distance;
-    const slowerBonus = Math.max(0, predator.traits.speed - prey.traits.speed);
-    const sizeBonus = prey.traits.size;
-    const score =
-      closeness * (120 + thirstPressure * 70) +
-      slowerBonus * 6 +
-      sizeBonus * (4 + hungerPressure * 7);
+    const score = scorePreyTarget(predator, prey, hungerPressure, thirstPressure);
 
     if (score > bestScore) {
       bestScore = score;
@@ -95,20 +82,7 @@ export const chooseEscapeTarget = (creature: Creature, predators: Creature[], te
       x: clamp(creature.position.x + Math.cos(angle) * distance, 2, terrain.width - 2),
       y: clamp(creature.position.y + Math.sin(angle) * distance, 2, terrain.height - 2),
     };
-
-    const dangerScore = nearbyPredators.reduce((sum, predator) => sum + 1 / Math.max(12, Math.hypot(candidate.x - predator.position.x, candidate.y - predator.position.y)), 0);
-    const pointsTowardPredator = nearbyPredators.some((predator) => {
-      const current = creature.distanceTo(predator.position);
-      const future = Math.hypot(candidate.x - predator.position.x, candidate.y - predator.position.y);
-      return future < current;
-    });
-
-    if (pointsTowardPredator) {
-      continue;
-    }
-
-    const waterPenalty = isNearWater(terrain, candidate, terrain.cellSize * 0.65) ? 0.18 : 0;
-    const score = -dangerScore - waterPenalty;
+    const score = scoreEscapeCandidate(creature, candidate, nearbyPredators, terrain);
     if (score > bestScore) {
       bestScore = score;
       bestTarget = candidate;
@@ -124,4 +98,40 @@ export const chooseWaterTarget = (creature: Creature, terrain: TerrainMap, drink
   }
 
   return findNearestDrinkingPoint(terrain, creature.position, creature.getPerceptionRadius() * 1.6, drinkDistance);
+};
+
+const isVisibleMateCandidate = (creature: Creature, other: Creature): boolean => {
+  if (other.id === creature.id || !creature.canMateWith(other)) {
+    return false;
+  }
+
+  return creature.distanceTo(other.position) <= creature.getPerceptionRadius();
+};
+
+const scorePreyTarget = (predator: Creature, prey: Creature, hungerPressure: number, thirstPressure: number): number => {
+  const distance = Math.max(1, predator.distanceTo(prey.position));
+  const closeness = 1 / distance;
+  const slowerBonus = Math.max(0, predator.traits.speed - prey.traits.speed);
+  const sizeBonus = prey.traits.size;
+
+  return closeness * (120 + thirstPressure * 70) + slowerBonus * 6 + sizeBonus * (4 + hungerPressure * 7);
+};
+
+const scoreEscapeCandidate = (creature: Creature, candidate: Point, predators: Creature[], terrain: TerrainMap): number => {
+  const movesTowardPredator = predators.some((predator) => {
+    const currentDistance = creature.distanceTo(predator.position);
+    const candidateDistance = Math.hypot(candidate.x - predator.position.x, candidate.y - predator.position.y);
+    return candidateDistance < currentDistance;
+  });
+
+  if (movesTowardPredator) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const dangerPenalty = predators.reduce(
+    (sum, predator) => sum + 1 / Math.max(12, Math.hypot(candidate.x - predator.position.x, candidate.y - predator.position.y)),
+    0,
+  );
+  const waterPenalty = isNearWater(terrain, candidate, terrain.cellSize * 0.65) ? 0.18 : 0;
+  return -dangerPenalty - waterPenalty;
 };

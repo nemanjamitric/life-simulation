@@ -1,5 +1,6 @@
 import type { BaseTraits, Bounds, CreatureIntent, CreatureNeed, CreatureState, Point, Sex, SpeciesKind } from '../types';
 import { clamp } from './random';
+import { applyNeedDelta, createInitialCreatureState } from './creatureNeeds';
 
 export class Creature {
   public readonly id: string;
@@ -14,7 +15,7 @@ export class Creature {
   public targetId: string | null = null;
   public heading = Math.random() * Math.PI * 2;
   public offspringCount = 0;
-  public consumedUnits = 0;
+  public mealsConsumed = 0;
 
   constructor(id: string, species: SpeciesKind, sex: Sex, position: Point, traits: BaseTraits) {
     this.id = id;
@@ -22,12 +23,7 @@ export class Creature {
     this.sex = sex;
     this.position = position;
     this.traits = traits;
-    this.state = {
-      hunger: traits.hungerCapacity * 0.8,
-      thirst: traits.thirstCapacity * 0.8,
-      reproductionDrive: 0,
-      age: 0,
-    };
+    this.state = createInitialCreatureState(traits);
   }
 
   public getRadius = (): number => clamp(4 + this.traits.size * 2.4, 4, 17);
@@ -72,39 +68,51 @@ export class Creature {
   };
 
   public updateNeeds = (dt: number): void => {
-    const hungerLoss = 0.34 + this.traits.size * 0.26 + this.traits.perception * 0.03;
-    const thirstLoss = 0.34 + this.traits.speed * 0.24 + this.traits.perception * 0.03;
-    const thirstMultiplier = this.getHungerRatio() < 0.18 ? 1.7 : 1;
-
-    this.state.age += dt;
-    this.state.hunger = clamp(this.state.hunger - dt * hungerLoss, 0, this.traits.hungerCapacity);
-    this.state.thirst = clamp(this.state.thirst - dt * thirstLoss * thirstMultiplier * 1.4, 0, this.traits.thirstCapacity);
-    this.state.reproductionDrive = clamp(this.state.reproductionDrive + dt * this.traits.reproductionRate * 0.06, 0, 1.4);
+    this.state = applyNeedDelta(this.state, this.traits, this.getHungerRatio(), dt);
 
     if (this.state.thirst <= 0 || this.state.age >= this.traits.maxAge) {
-      this.alive = false;
-      this.intent = 'resting';
+      this.kill();
     }
   };
 
   public eat = (amount: number): void => {
     this.state.hunger = clamp(this.state.hunger + amount, 0, this.traits.hungerCapacity);
-    this.consumedUnits += 1;
-    this.intent = 'eating';
+    this.mealsConsumed += 1;
+    this.setIntent('eating');
   };
 
   public drink = (): void => {
     this.state.thirst = this.traits.thirstCapacity;
-    this.intent = 'drinking';
+    this.clearTarget();
+    this.setIntent('drinking');
   };
 
   public completeReproduction = (): void => {
     this.state.reproductionDrive = 0.2;
     this.offspringCount += 1;
-    this.intent = 'mating';
+    this.clearTarget();
+    this.setIntent('mating');
   };
 
   public distanceTo = (point: Point): number => Math.hypot(this.position.x - point.x, this.position.y - point.y);
+
+  public setIntent = (intent: CreatureIntent): void => {
+    this.intent = intent;
+  };
+
+  public setTarget = (targetId: string): void => {
+    this.targetId = targetId;
+  };
+
+  public clearTarget = (): void => {
+    this.targetId = null;
+  };
+
+  public kill = (): void => {
+    this.alive = false;
+    this.clearTarget();
+    this.setIntent('resting');
+  };
 
   public canMateWith = (other: Creature): boolean => {
     return (
